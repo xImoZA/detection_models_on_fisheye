@@ -1,8 +1,10 @@
 import json
+
 import numpy as np
 
 WOODSCAPE_WIDTH = 1280
 WOODSCAPE_HEIGHT = 966
+
 
 def compute_iou(box1: list[float], box2: list[float]) -> float:
     x1_min, y1_min, x1_max, y1_max = box1
@@ -20,30 +22,38 @@ def compute_iou(box1: list[float], box2: list[float]) -> float:
 
     return inter_area / union_area
 
-def get_annotation(path_annotation: str, file_name: str) -> dict[str, list[list[float]]]:
-    objects = {
-        "vehicles": [],
-        "bicycle": [],
-        "person": []
-    }
 
-    with open(f'{path_annotation}/{file_name}.txt', 'r', encoding='utf-8') as annotation_file:
+def get_annotation(
+    path_annotation: str, file_name: str
+) -> dict[str, list[list[float]]]:
+    objects = {"vehicles": [], "bicycle": [], "person": []}
+
+    with open(
+        f"{path_annotation}/{file_name}.txt", "r", encoding="utf-8"
+    ) as annotation_file:
         for string in annotation_file.readlines():
             coordinates = string.split(",")
             cls_name = coordinates[0]
-            annotation_coord = [float(coordinates[2]), float(coordinates[3]), float(coordinates[4]),
-                                float(coordinates[5])]
+            annotation_coord = [
+                float(coordinates[2]),
+                float(coordinates[3]),
+                float(coordinates[4]),
+                float(coordinates[5]),
+            ]
 
             if cls_name in objects.keys():
                 objects[cls_name].append(annotation_coord)
 
     return objects
 
-def analyze_detection_results(path_result: str, path_annotation: str, iou_threshold: float, normalize: bool) -> (dict[str, list[tuple[float, str]]], dict[str, int]):
+
+def analyze_detection_results(
+    path_result: str, path_annotation: str, iou_threshold: float, normalize: bool
+) -> (dict[str, list[tuple[float, str]]], dict[str, int]):
     tp_and_fp = {"vehicles": [], "person": [], "bicycle": []}
     false_negative = {"vehicles": 0, "person": 0, "bicycle": 0}
 
-    with open(path_result, 'r', encoding='utf-8') as file:
+    with open(path_result, "r", encoding="utf-8") as file:
         data = json.load(file)
 
         for component in data:
@@ -53,12 +63,32 @@ def analyze_detection_results(path_result: str, path_annotation: str, iou_thresh
 
             for expected_obj in component["objects"]:
                 if normalize:
-                    detecting_coord = normalize_coordinate(expected_obj["relative_coordinates"]["center_x"], expected_obj["relative_coordinates"]["center_y"], expected_obj["relative_coordinates"]["width"], expected_obj["relative_coordinates"]["height"])
+                    detecting_coord = normalize_coordinate(
+                        expected_obj["relative_coordinates"]["center_x"],
+                        expected_obj["relative_coordinates"]["center_y"],
+                        expected_obj["relative_coordinates"]["width"],
+                        expected_obj["relative_coordinates"]["height"],
+                    )
                 else:
-                    detecting_coord = [expected_obj["relative_coordinates"]["x_min"], expected_obj["relative_coordinates"]["y_min"], expected_obj["relative_coordinates"]["x_max"], expected_obj["relative_coordinates"]["y_max"]]
+                    detecting_coord = [
+                        expected_obj["relative_coordinates"]["x_min"],
+                        expected_obj["relative_coordinates"]["y_min"],
+                        expected_obj["relative_coordinates"]["x_max"],
+                        expected_obj["relative_coordinates"]["y_max"],
+                    ]
 
                 cls_name = expected_obj["name"]
-                if cls_name in ["car", "truck", "bus", "motorbike", "motorcycle", "train", "boat", "airplane", "aeroplane"]:
+                if cls_name in [
+                    "car",
+                    "truck",
+                    "bus",
+                    "motorbike",
+                    "motorcycle",
+                    "train",
+                    "boat",
+                    "airplane",
+                    "aeroplane",
+                ]:
                     cls_name = "vehicles"
                 elif cls_name in ["bicycle", "person"]:
                     pass
@@ -75,22 +105,29 @@ def analyze_detection_results(path_result: str, path_annotation: str, iou_thresh
                         best_match = annotation_coordinate
 
                 if matched:
-                    tp_and_fp[cls_name].append((expected_obj["confidence"], "true_positive"))
+                    tp_and_fp[cls_name].append(
+                        (expected_obj["confidence"], "true_positive")
+                    )
                     objects[cls_name].remove(best_match)
                 else:
-                    tp_and_fp[cls_name].append((expected_obj["confidence"], "false_positive"))
+                    tp_and_fp[cls_name].append(
+                        (expected_obj["confidence"], "false_positive")
+                    )
 
             for cls in objects:
                 false_negative[cls] += len(objects[cls])
 
         return tp_and_fp, false_negative
 
+
 def compute_voc_ap(precision, recall):
-    recall_levels = np.linspace(0., 1., 11)
+    recall_levels = np.linspace(0.0, 1.0, 11)
 
     interpolated_precision = np.zeros_like(recall_levels)
     for i, recall_level in enumerate(recall_levels):
-        relevant_precisions = [p for r, p in zip(recall, precision) if r >= recall_level]
+        relevant_precisions = [
+            p for r, p in zip(recall, precision) if r >= recall_level
+        ]
         if relevant_precisions:
             interpolated_precision[i] = max(relevant_precisions)
         else:
@@ -99,7 +136,10 @@ def compute_voc_ap(precision, recall):
     ap = np.mean(interpolated_precision)
     return ap
 
-def compute_map(tp_and_fp: dict[str, list[tuple[float, str]]], fn: dict[str, int]) -> float:
+
+def compute_map(
+    tp_and_fp: dict[str, list[tuple[float, str]]], fn: dict[str, int]
+) -> float:
     APs: float = 0.0
     for key in tp_and_fp.keys():
         true_positive: int = 0
@@ -126,7 +166,9 @@ def compute_map(tp_and_fp: dict[str, list[tuple[float, str]]], fn: dict[str, int
     return APs / len(tp_and_fp.keys())
 
 
-def normalize_coordinate(center_x: float, center_y: float, width: float, height: float) -> list[float]:
+def normalize_coordinate(
+    center_x: float, center_y: float, width: float, height: float
+) -> list[float]:
     x_min = (center_x - width / 2) * WOODSCAPE_WIDTH
     y_min = (center_y - height / 2) * WOODSCAPE_HEIGHT
     x_max = (center_x + width / 2) * WOODSCAPE_WIDTH
@@ -136,7 +178,9 @@ def normalize_coordinate(center_x: float, center_y: float, width: float, height:
 
 
 def main(path_result: str, path_annotation: str, iou_threshold=0.5, normalize=False):
-    tp_and_fp, false_negative = analyze_detection_results(path_result, path_annotation, iou_threshold, normalize)
+    tp_and_fp, false_negative = analyze_detection_results(
+        path_result, path_annotation, iou_threshold, normalize
+    )
     return compute_map(tp_and_fp, false_negative)
 
 
