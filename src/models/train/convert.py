@@ -1,10 +1,14 @@
 import json
 import os
 
+
 def normalize_coordinate(x: float, y: float, width: int, height: int) -> list[str]:
     return [str(round(x / width, 6)), str(round(y / height, 6))]
 
-def convert_Woodscape_to_Ultralytics(input_dir: str, output_dir: str, info_json_path: str):
+
+def convert_Woodscape_to_Ultralytics(
+    input_dir: str, output_dir: str, info_json_path: str
+):
     with open(info_json_path, "r", encoding="utf-8") as f:
         CLASSES = {name: idx for idx, name in enumerate(json.load(f)["classes"])}
 
@@ -27,7 +31,9 @@ def convert_Woodscape_to_Ultralytics(input_dir: str, output_dir: str, info_json_
             segmentation = data["segmentation"]
             norm_coords = []
             for point in segmentation:
-                norm_coords.extend(normalize_coordinate(point[0], point[1], width, height))
+                norm_coords.extend(
+                    normalize_coordinate(point[0], point[1], width, height)
+                )
 
             lines.append(f"{class_id} " + " ".join(norm_coords))
 
