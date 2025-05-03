@@ -13,9 +13,7 @@ class ModelPredict:
             # "YOLO11": YOLO(
             #     ""
             # ),
-            "YOLO8": YOLO(
-                "src/models/weights/yolov8m.pt"
-            ),
+            "YOLO8": YOLO("src/models/weights/yolov8m.pt"),
             # "RT-DETR": RTDETR(
             #     ""
             # ),
