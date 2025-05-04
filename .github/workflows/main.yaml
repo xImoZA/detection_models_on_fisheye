@@ -19,4 +19,4 @@ jobs:
       - name: "isort"
         run: isort . --check --diff
       - name: "mypy"
-        run: mypy . --check --diff
+        run: mypy .
