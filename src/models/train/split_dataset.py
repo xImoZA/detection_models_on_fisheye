@@ -1,36 +1,46 @@
 import os
+from pathlib import Path
 from shutil import copyfile
 
 from sklearn.model_selection import train_test_split
 
 
-def copy_files(file_list, source_dir, target_dir, extension=".png"):
-    os.makedirs(target_dir, exist_ok=True)
+def copy_files(
+    file_list: list[str], source_dir: Path, target_dir: Path, extension: str = ".png"
+):
+    target_dir.mkdir(parents=True, exist_ok=True)
 
     for file_name in file_list:
-        source_path = os.path.join(source_dir, file_name.replace(".png", extension))
-        target_path = os.path.join(target_dir, file_name.replace(".png", extension))
+        stem = Path(file_name).stem
+        source_path = source_dir / f"{stem}{extension}"
+        target_path = target_dir / f"{stem}{extension}"
 
-        if os.path.exists(source_path):
-            copyfile(source_path, target_path)
-        else:
-            raise ValueError(f"Файл {source_path} не найден.")
+        copyfile(source_path, target_path)
 
 
-def split_dataset(dataset: str, annotations_path: str, output_dir: str):
-    if not os.path.exists(dataset):
+def split_dataset(dataset: Path, annotations_path: Path, output_dir: Path):
+    if not dataset.exists():
         raise FileNotFoundError(f"Input dir not found: {dataset}")
 
+    file_names = [f.name for f in dataset.iterdir() if f.is_file()]
+
     train, _X = train_test_split(
-        os.listdir(dataset), test_size=0.3, shuffle=True, random_state=42
+        file_names, test_size=0.3, shuffle=True, random_state=42
     )
     val, test = train_test_split(_X, test_size=0.5, shuffle=True, random_state=42)
 
-    copy_files(train, dataset, f"{output_dir}/images/train")
-    copy_files(train, annotations_path, f"{output_dir}/labels/train", extension=".txt")
+    train_img_dir = output_dir / "images" / "train"
+    train_lbl_dir = output_dir / "labels" / "train"
+    val_img_dir = output_dir / "images" / "val"
+    val_lbl_dir = output_dir / "labels" / "val"
+    test_img_dir = output_dir / "images" / "test"
+    test_lbl_dir = output_dir / "labels" / "test"
 
-    copy_files(val, dataset, f"{output_dir}/images/val")
-    copy_files(val, annotations_path, f"{output_dir}/labels/val", extension=".txt")
+    copy_files(train, dataset, train_img_dir)
+    copy_files(train, annotations_path, train_lbl_dir, extension=".txt")
 
-    copy_files(test, dataset, f"{output_dir}/images/test")
-    copy_files(test, annotations_path, f"{output_dir}/labels/test", extension=".txt")
+    copy_files(val, dataset, val_img_dir)
+    copy_files(val, annotations_path, val_lbl_dir, extension=".txt")
+
+    copy_files(test, dataset, test_img_dir)
+    copy_files(test, annotations_path, test_lbl_dir, extension=".txt")

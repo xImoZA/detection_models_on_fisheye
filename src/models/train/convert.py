@@ -1,27 +1,35 @@
 import json
-import os
+from pathlib import Path
 
 
-def normalize_coordinate(x: float, y: float, width: int, height: int) -> list[str]:
-    return [str(round(x / width, 6)), str(round(y / height, 6))]
+def normalize_coordinate(value: float, size: int) -> float:
+    return round(value / size, 6)
+
+
+def normalize_coordinates_as_str(
+    x: float, y: float, width: int, height: int
+) -> list[str]:
+    norm_x = normalize_coordinate(x, width)
+    norm_y = normalize_coordinate(y, height)
+    return [str(norm_x), str(norm_y)]
 
 
 def convert_Woodscape_to_Ultralytics(
-    input_dir: str, output_dir: str, info_json_path: str
+    input_dir: Path, output_dir: Path, info_json_path: Path
 ):
     with open(info_json_path, "r", encoding="utf-8") as f:
         CLASSES = {name: idx for idx, name in enumerate(json.load(f)["classes"])}
 
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    for json_file in os.listdir(input_dir):
-        with open(f"{input_dir}/{json_file}", "r", encoding="utf-8") as f:
-            annotations = json.load(f)[json_file]
+    for json_file in input_dir.glob("*.json"):
+        with json_file.open("r", encoding="utf-8") as f:
+            annotations = json.load(f)[json_file.name]
 
         height = annotations["image_height"]
         width = annotations["image_width"]
 
-        label_file = os.path.join(output_dir, json_file.replace(".json", ".txt"))
+        label_file = output_dir / json_file.with_suffix(".txt").name
         lines = []
         for data in annotations["annotation"]:
             class_id = CLASSES.get(data["tags"][0], -1)
@@ -32,10 +40,9 @@ def convert_Woodscape_to_Ultralytics(
             norm_coords = []
             for point in segmentation:
                 norm_coords.extend(
-                    normalize_coordinate(point[0], point[1], width, height)
+                    normalize_coordinates_as_str(point[0], point[1], width, height)
                 )
 
             lines.append(f"{class_id} " + " ".join(norm_coords))
 
-        with open(label_file, "w") as f:
-            f.write("\n".join(lines))
+        label_file.write_text("\n".join(lines))
