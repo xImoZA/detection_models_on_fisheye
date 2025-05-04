@@ -19,5 +19,4 @@ jobs:
       - name: "isort"
         run: isort . --check --diff
       - name: "mypy"
-        run: echo -e "[mypy]\nignore_missing_imports = True\n[mypy-sklearn.*]\nignore_missing_imports = True" > mypy.ini
-          mypy .
+        run: mypy . --check --diff
