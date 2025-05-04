@@ -18,3 +18,5 @@ jobs:
         run: black . --check --diff --color
       - name: "isort"
         run: isort . --check --diff
+      - name: "mypy"
+        run: mypy . --check --diff
