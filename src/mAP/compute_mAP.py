@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 import numpy as np
 
@@ -16,7 +17,7 @@ def compute_iou(box1: list[float], box2: list[float]) -> float:
     yi_max = min(y1_max, y2_max)
     inter_area = max(0.0, xi_max - xi_min) * max(0.0, yi_max - yi_min)
 
-    box1_area = (x2_max - x1_min) * (y1_max - y1_min)
+    box1_area = (x1_max - x1_min) * (y1_max - y1_min)
     box2_area = (x2_max - x2_min) * (y2_max - y2_min)
     union_area = box1_area + box2_area - inter_area
 
@@ -26,7 +27,11 @@ def compute_iou(box1: list[float], box2: list[float]) -> float:
 def get_annotation(
     path_annotation: str, file_name: str
 ) -> dict[str, list[list[float]]]:
-    objects = {"vehicles": [], "bicycle": [], "person": []}
+    objects: dict[str, list[list[float]]] = {
+        "vehicles": [],
+        "bicycle": [],
+        "person": [],
+    }
 
     with open(
         f"{path_annotation}/{file_name}.txt", "r", encoding="utf-8"
@@ -41,7 +46,7 @@ def get_annotation(
                 float(coordinates[5]),
             ]
 
-            if cls_name in objects.keys():
+            if cls_name in objects:
                 objects[cls_name].append(annotation_coord)
 
     return objects
@@ -49,8 +54,12 @@ def get_annotation(
 
 def analyze_detection_results(
     path_result: str, path_annotation: str, iou_threshold: float, normalize: bool
-) -> (dict[str, list[tuple[float, str]]], dict[str, int]):
-    tp_and_fp = {"vehicles": [], "person": [], "bicycle": []}
+) -> tuple[dict[str, list[tuple[float, str]]], dict[str, int]]:
+    tp_and_fp: dict[str, list[tuple[float, str]]] = {
+        "vehicles": [],
+        "person": [],
+        "bicycle": [],
+    }
     false_negative = {"vehicles": 0, "person": 0, "bicycle": 0}
 
     with open(path_result, "r", encoding="utf-8") as file:
@@ -96,7 +105,8 @@ def analyze_detection_results(
                     continue
 
                 matched = False
-                max_iou = 0
+                max_iou = 0.0
+                best_match = None
                 for annotation_coordinate in objects[cls_name]:
                     iou = compute_iou(detecting_coord, annotation_coordinate)
                     if iou > max_iou and iou >= iou_threshold:
@@ -104,7 +114,7 @@ def analyze_detection_results(
                         max_iou = iou
                         best_match = annotation_coordinate
 
-                if matched:
+                if matched and best_match is not None:
                     tp_and_fp[cls_name].append(
                         (expected_obj["confidence"], "true_positive")
                     )
@@ -120,7 +130,7 @@ def analyze_detection_results(
         return tp_and_fp, false_negative
 
 
-def compute_voc_ap(precision, recall):
+def compute_voc_ap(precision: list[float], recall: list[float]) -> float:
     recall_levels = np.linspace(0.0, 1.0, 11)
 
     interpolated_precision = np.zeros_like(recall_levels)
@@ -134,7 +144,7 @@ def compute_voc_ap(precision, recall):
             interpolated_precision[i] = 0.0
 
     ap = np.mean(interpolated_precision)
-    return ap
+    return float(ap)
 
 
 def compute_map(
@@ -177,7 +187,12 @@ def normalize_coordinate(
     return [x_min, y_min, x_max, y_max]
 
 
-def main(path_result: str, path_annotation: str, iou_threshold=0.5, normalize=False):
+def main(
+    path_result: str,
+    path_annotation: str,
+    iou_threshold: float = 0.5,
+    normalize: bool = False,
+) -> float:
     tp_and_fp, false_negative = analyze_detection_results(
         path_result, path_annotation, iou_threshold, normalize
     )
