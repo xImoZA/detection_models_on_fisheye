@@ -1,0 +1,22 @@
+dataset:
+  config_path: "src/datasets/WoodScape/woodscape.yaml"
+
+model:
+  pretrained_weights: "src/models/train/notebooks/pretrained_weights/yolov8m-seg.pt"
+  output_dir: "src/models/train/working/yolo8m_train"
+
+training:
+  epochs: 150
+  batch_size: 16
+  image_size: 640
+  device: "cuda"  # or "cpu"
+  workers: 8
+  save_period: 5
+
+optimizer:
+  name: "AdamW"
+  lr0: 0.001
+  warmup_epochs: 5
+
+experiment:
+  name: "yolo8_m"
