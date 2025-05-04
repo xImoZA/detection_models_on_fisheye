@@ -1,2 +1,4 @@
 numpy~=1.26.4
 scikit-learn~=1.6.1
+PyYAML~=6.0.2
+types-PyYAML~=6.0.12
