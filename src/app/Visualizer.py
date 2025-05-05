@@ -1,17 +1,16 @@
-import os
-import subprocess
+from pathlib import Path
 
-import cv2
+import cv2 as cv
 import numpy as np
 from ultralytics.engine.results import Results
 from ultralytics.utils.plotting import colors
 
 
 class Visualizer:
-    def _visualize(self, predict: Results):
-        visualized_img = predict.plot(conf=False, labels=False)
+    def _visualize(self, prediction: Results):
+        visualized_img = prediction.plot(conf=False, labels=False)
 
-        annotation = self._create_annotation(predict, visualized_img.shape[0])
+        annotation = self._create_annotation(prediction, visualized_img.shape[0])
 
         final_img = np.hstack((visualized_img, annotation))
 
@@ -21,57 +20,61 @@ class Visualizer:
         classes = result.boxes.cls.unique()
         names = result.names
 
-        annotation_width = 300
+        annotation_width = 500
         annotation = np.ones((img_height, annotation_width, 3), dtype=np.uint8) * 255
 
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.7
-        thickness = 2
-        line_height = 40
         start_y = 50
+
+        start_x_rectangle = 10
+        end_x_rectangle = 30
+        height_rectangle = 20
+        thickness_rectangle = -1
+
+        start_x = 40
+        height_text = 10
+        font = cv.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.7
+        text_color = (0, 0, 0)
+        thickness_front = 2
+        line_height = 40
 
         for i, cls in enumerate(classes):
             class_id = int(cls)
             class_name = names[class_id]
-            color = self._get_class_color(class_id)
+            color = Visualizer._get_class_color(class_id)
 
-            cv2.rectangle(
+            cv.rectangle(
                 annotation,
-                (10, start_y + i * line_height - 20),
-                (30, start_y + i * line_height),
+                (start_x_rectangle, start_y + i * line_height - height_rectangle),
+                (end_x_rectangle, start_y + i * line_height),
                 color,
-                -1,
+                thickness_rectangle,
             )
 
-            cv2.putText(
+            cv.putText(
                 annotation,
                 class_name,
-                (40, start_y + i * line_height - 5),
+                (start_x, start_y + i * line_height - height_text),
                 font,
                 font_scale,
-                (0, 0, 0),
-                thickness,
+                text_color,
+                thickness_front,
             )
 
         return annotation
 
-    def _get_class_color(self, class_id):
+    @staticmethod
+    def _get_class_color(class_id):
         color = colors(int(class_id))  # RGB annotation
         return color[2], color[1], color[0]
 
-    def save_and_visualize(self, output_path: str, model_name: str, predict: Results):
-        final_img = self._visualize(predict)
+    def save_and_visualize(self, output_path: Path, prediction: Results):
+        final_img = self._visualize(prediction)
 
-        output_dir = os.path.dirname(output_path)
-        if output_dir:
-            os.makedirs(output_dir, exist_ok=True)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        cv2.imwrite(output_path, final_img)
+        cv.imwrite(str(output_path), final_img)
 
-        self._open_image(output_path)
-
-    def _open_image(self, image_path: str):
-        try:
-            subprocess.call(("xdg-open", image_path))
-        except Exception as e:
-            print(f"Не удалось открыть изображение: {e}")
+        cv.imshow("Visualization", final_img)
+        cv.waitKey(0)
+        cv.destroyAllWindows()

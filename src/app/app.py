@@ -1,48 +1,72 @@
 import argparse
-import os
+from pathlib import Path
 
-from src.app.ModelPredict import ModelPredict
-from src.app.Visualizer import Visualizer
+import cv2 as cv
+
+from load_model import load_model
+from ModelPredictor import ModelPredictor
+from Visualizer import Visualizer
+
+
+def determine_output_path(
+    input_path: Path, model_name: str, output_path: Path | None = None
+) -> Path:
+    if output_path:
+        if output_path.is_dir():
+            return output_path / f"{input_path.stem}_{model_name}{input_path.suffix}"
+        return output_path
+
+    return input_path.parent / f"{input_path.stem}_{model_name}{input_path.suffix}"
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Visualize object detection predictions with annotation"
-    )
-    parser.add_argument("input_path", help="Path to the input image")
-    parser.add_argument(
-        "output_path",
-        nargs="?",
-        default=None,
-        help="Optional path to save the output image",
+        description="Object detection visualization tool with model predictions"
     )
     parser.add_argument(
+        "-i",
+        "--input_path",
+        type=Path,
+        required=True,
+        help="Path to the input image file",
+    )
+    parser.add_argument(
+        "-o",
+        "--output_path",
+        type=Path,
+        help="Path to save the output image (default: input with model suffix)",
+    )
+    parser.add_argument(
+        "-m",
         "--model",
         type=str,
-        default="YOLO8",
-        choices=["YOLO11", "YOLO8", "RT-DETR", "SAM"],
-        help="Model to use for detection",
+        default="YOLOv8",
+        choices=["YOLOv8", "YOLOv11", "RT-DETR", "SAM"],
+        help="Detection model to use (default: YOLOv8)",
     )
 
     args = parser.parse_args()
 
-    if not os.path.exists(args.input_path):
+    if not args.input_path.exists():
         raise FileNotFoundError(f"Input file not found: {args.input_path}")
 
-    model_predict = ModelPredict()
-    visualizer = Visualizer()
+    output_path = determine_output_path(args.input_path, args.model, args.output_path)
 
-    pred = model_predict.predict(args.model, args.input_path, args.output_path)
+    try:
+        model = load_model(args.model)
+        model_predictor = ModelPredictor(model)
+        visualizer = Visualizer()
 
-    if args.output_path is None:
-        base, ext = os.path.splitext(args.input_path)
-    else:
-        base, ext = os.path.splitext(args.output_path)
+        img = cv.imread(str(args.input_path))
+        if img is None:
+            raise ValueError(f"Could not read image from {args.input_path}")
 
-    ext = ext if ext else ".jpg"
-    output_path = f"{base}_{args.model}{ext}"
+        prediction = model_predictor.predict(img)
+        visualizer.save_and_visualize(output_path, prediction)
 
-    visualizer.save_and_visualize(output_path, args.model, pred)
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        raise
 
 
 if __name__ == "__main__":
