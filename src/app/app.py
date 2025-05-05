@@ -2,7 +2,6 @@ import argparse
 from pathlib import Path
 
 import cv2 as cv
-
 from load_model import load_model
 from ModelPredictor import ModelPredictor
 from Visualizer import Visualizer

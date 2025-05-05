@@ -1,7 +1,6 @@
 import numpy as np
-from ultralytics.engine.results import Results
-
 from load_model import MODEL_TYPE
+from ultralytics.engine.results import Results
 
 
 class ModelPredictor:
