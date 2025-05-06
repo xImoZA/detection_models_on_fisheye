@@ -2,23 +2,28 @@ from pathlib import Path
 
 import cv2 as cv
 import numpy as np
+from draw_ultralytics_polygons_from_file import (
+    GT_COLOR, draw_ultralytics_polygons_from_file)
 from ultralytics.engine.results import Results
 from ultralytics.utils.plotting import colors
 
 
 class Visualizer:
-    def _visualize(self, prediction: Results):
-        visualized_img = prediction.plot(conf=False, labels=False)
+    def _visualize(self, prediction: Results, gt_path: Path | None):
+        img = prediction.plot(conf=False, labels=False, boxes=False)
 
-        annotation = self._create_annotation(prediction, visualized_img.shape[0])
+        if gt_path is not None:
+            img = draw_ultralytics_polygons_from_file(img, gt_path)
 
-        final_img = np.hstack((visualized_img, annotation))
+        annotation = self._create_annotation(prediction, img.shape[0])
+
+        final_img = np.hstack((img, annotation))
 
         return final_img
 
-    def _create_annotation(self, result, img_height):
-        classes = result.boxes.cls.unique()
-        names = result.names
+    def _create_annotation(self, prediction: Results, img_height: int) -> np.ndarray:
+        classes = prediction.boxes.cls.unique()
+        names = prediction.names
 
         annotation_width = 500
         annotation = np.ones((img_height, annotation_width, 3), dtype=np.uint8) * 255
@@ -61,6 +66,26 @@ class Visualizer:
                 thickness_front,
             )
 
+        cv.rectangle(
+            annotation,
+            (
+                start_x_rectangle,
+                start_y + len(classes) * line_height - height_rectangle,
+            ),
+            (end_x_rectangle, start_y + len(classes) * line_height),
+            GT_COLOR,
+            thickness_rectangle,
+        )
+
+        cv.putText(
+            annotation,
+            "ground truth",
+            (start_x, start_y + len(classes) * line_height - height_text),
+            font,
+            font_scale,
+            text_color,
+            thickness_front,
+        )
         return annotation
 
     @staticmethod
@@ -68,13 +93,15 @@ class Visualizer:
         color = colors(int(class_id))  # RGB annotation
         return color[2], color[1], color[0]
 
-    def save_and_visualize(self, output_path: Path, prediction: Results):
-        final_img = self._visualize(prediction)
+    def save_and_visualize(
+        self, output_path: Path, prediction: Results, gt_path: Path | None
+    ):
+        final_img = self._visualize(prediction, gt_path)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         cv.imwrite(str(output_path), final_img)
 
-        cv.imshow("Visualization", final_img)
+        cv.imshow("Detected objects", final_img)
         cv.waitKey(0)
         cv.destroyAllWindows()

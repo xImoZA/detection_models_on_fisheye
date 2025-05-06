@@ -36,6 +36,12 @@ def main():
         help="Path to save the output image (default: input with model suffix)",
     )
     parser.add_argument(
+        "-gt",
+        "--ground_truth",
+        type=Path,
+        help="Path to the ground truth file in Ultralytics format",
+    )
+    parser.add_argument(
         "-m",
         "--model",
         type=str,
@@ -49,6 +55,9 @@ def main():
     if not args.input_path.exists():
         raise FileNotFoundError(f"Input file not found: {args.input_path}")
 
+    if not args.ground_truth.exists():
+        raise FileNotFoundError(f"Ground truth file not found: {args.ground_truth}")
+
     output_path = determine_output_path(args.input_path, args.model, args.output_path)
 
     try:
@@ -61,7 +70,7 @@ def main():
             raise ValueError(f"Could not read image from {args.input_path}")
 
         prediction = model_predictor.predict(img)
-        visualizer.save_and_visualize(output_path, prediction)
+        visualizer.save_and_visualize(output_path, prediction, args.ground_truth)
 
     except Exception as e:
         print(f"Error processing image: {e}")
