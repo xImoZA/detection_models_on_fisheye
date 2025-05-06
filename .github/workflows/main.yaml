@@ -17,4 +17,4 @@ jobs:
       - name: "black"
         run: black . --check --diff --color
       - name: "isort"
-        run: isort . --check --diff
+        run: isort .

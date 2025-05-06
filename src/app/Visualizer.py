@@ -3,7 +3,9 @@ from pathlib import Path
 import cv2 as cv
 import numpy as np
 from draw_ultralytics_polygons_from_file import (
-    GT_COLOR, draw_ultralytics_polygons_from_file)
+    GT_COLOR,
+    draw_ultralytics_polygons_from_file,
+)
 from ultralytics.engine.results import Results
 from ultralytics.utils.plotting import colors
 
