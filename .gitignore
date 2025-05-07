@@ -1,3 +1,7 @@
+src/datasets/WoodScape/instance_annotations
+src/datasets/WoodScape/train_dataset
+src/datasets/WoodScape/yolo_annotations
+src/datasets/WoodScape/woodscape.yaml
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

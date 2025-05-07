@@ -6,18 +6,14 @@ def normalize_coordinate(value: float, size: int) -> float:
     return round(value / size, 6)
 
 
-def normalize_coordinates_as_str(
-    x: float, y: float, width: int, height: int
-) -> list[str]:
+def normalize_coordinates_as_str(x: float, y: float, width: int, height: int) -> list[str]:
     norm_x = normalize_coordinate(x, width)
     norm_y = normalize_coordinate(y, height)
     return [str(norm_x), str(norm_y)]
 
 
-def convert_Woodscape_to_Ultralytics(
-    input_dir: Path, output_dir: Path, info_json_path: Path
-):
-    with open(info_json_path, "r", encoding="utf-8") as f:
+def convert_Woodscape_to_Ultralytics(input_dir: Path, output_dir: Path, info_json_path: Path) -> None:
+    with open(info_json_path, encoding="utf-8") as f:
         CLASSES = {name: idx for idx, name in enumerate(json.load(f)["classes"])}
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -39,9 +35,7 @@ def convert_Woodscape_to_Ultralytics(
             segmentation = data["segmentation"]
             norm_coords = []
             for point in segmentation:
-                norm_coords.extend(
-                    normalize_coordinates_as_str(point[0], point[1], width, height)
-                )
+                norm_coords.extend(normalize_coordinates_as_str(point[0], point[1], width, height))
 
             lines.append(f"{class_id} " + " ".join(norm_coords))
 
