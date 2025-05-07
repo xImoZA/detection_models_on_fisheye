@@ -2,13 +2,14 @@ from pathlib import Path
 
 import cv2 as cv
 import numpy as np
+from numpy.typing import NDArray
 
 GT_COLOR = (255, 105, 180)
 
 
 def draw_ultralytics_polygons_from_file(
-    image: np.ndarray, gt_file: Path, color=GT_COLOR
-):
+    image: NDArray[np.uint8], gt_file: Path, color: tuple[int, int, int] = GT_COLOR
+) -> NDArray[np.uint8]:
     img_height, img_width = image.shape[:2]
 
     thickness = 2
@@ -28,6 +29,6 @@ def draw_ultralytics_polygons_from_file(
                     thickness=thickness,
                 )
     except Exception as e:
-        raise ValueError(f"Error processing ground truth file {gt_file}: {str(e)}")
+        raise ValueError(f"Error processing ground truth file {gt_file}: {str(e)}") from e
 
     return image

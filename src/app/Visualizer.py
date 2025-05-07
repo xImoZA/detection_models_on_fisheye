@@ -6,12 +6,13 @@ from draw_ultralytics_polygons_from_file import (
     GT_COLOR,
     draw_ultralytics_polygons_from_file,
 )
+from numpy.typing import NDArray
 from ultralytics.engine.results import Results
 from ultralytics.utils.plotting import colors
 
 
 class Visualizer:
-    def _visualize(self, prediction: Results, gt_path: Path | None):
+    def _visualize(self, prediction: Results, gt_path: Path | None) -> NDArray[np.uint8]:
         img = prediction.plot(conf=False, labels=False, boxes=False)
 
         if gt_path is not None:
@@ -23,7 +24,7 @@ class Visualizer:
 
         return final_img
 
-    def _create_annotation(self, prediction: Results, img_height: int) -> np.ndarray:
+    def _create_annotation(self, prediction: Results, img_height: int) -> NDArray[np.uint8]:
         classes = prediction.boxes.cls.unique()
         names = prediction.names
 
@@ -91,13 +92,11 @@ class Visualizer:
         return annotation
 
     @staticmethod
-    def _get_class_color(class_id):
+    def _get_class_color(class_id: int) -> tuple[int, int, int]:
         color = colors(int(class_id))  # RGB annotation
         return color[2], color[1], color[0]
 
-    def save_and_visualize(
-        self, output_path: Path, prediction: Results, gt_path: Path | None
-    ):
+    def save_and_visualize(self, output_path: Path, prediction: Results, gt_path: Path | None) -> None:
         final_img = self._visualize(prediction, gt_path)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)

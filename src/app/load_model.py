@@ -13,11 +13,9 @@ MODEL_WEIGHTS = {
 }
 
 
-def load_model(model_name: str):
+def load_model(model_name: str) -> MODEL_TYPE:
     if model_name not in MODEL_WEIGHTS:
-        raise ValueError(
-            f"Unsupported model: {model_name}. Available: {list(MODEL_WEIGHTS.keys())}"
-        )
+        raise ValueError(f"Unsupported model: {model_name}. Available: {list(MODEL_WEIGHTS.keys())}")
 
     weight_path = Path(MODEL_WEIGHTS[model_name])
     if not weight_path.exists():

@@ -7,9 +7,7 @@ from ModelPredictor import ModelPredictor
 from Visualizer import Visualizer
 
 
-def determine_output_path(
-    input_path: Path, model_name: str, output_path: Path | None = None
-) -> Path:
+def determine_output_path(input_path: Path, model_name: str, output_path: Path | None = None) -> Path:
     if output_path:
         if output_path.is_dir():
             return output_path / f"{input_path.stem}_{model_name}{input_path.suffix}"
@@ -18,10 +16,8 @@ def determine_output_path(
     return input_path.parent / f"{input_path.stem}_{model_name}{input_path.suffix}"
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Object detection visualization tool with model predictions"
-    )
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Object detection visualization tool with model predictions")
     parser.add_argument(
         "-i",
         "--input_path",
