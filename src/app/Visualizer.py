@@ -13,7 +13,8 @@ from ultralytics.utils.plotting import colors
 
 class Visualizer:
     def _visualize(self, prediction: Results, gt_path: Path | None) -> NDArray[np.uint8]:
-        img = prediction.plot(conf=False, labels=False, boxes=False)
+        has_masks = hasattr(prediction, "masks") and prediction.masks is not None
+        img = prediction.plot(conf=False, labels=False, boxes=not has_masks)
 
         if gt_path is not None:
             img = draw_ultralytics_polygons_from_file(img, gt_path)
