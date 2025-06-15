@@ -1,0 +1,21 @@
+{
+    "info": "instance polygon classes",
+    "classes": [
+        "car",
+        "train/tram",
+        "truck",
+        "other_wheeled_transport",
+        "trailer",
+        "van",
+        "caravan",
+        "bus",
+        "bicycle",
+        "motorcycle",
+        "person",
+        "rider",
+        "ego_vehicle",
+        "pole",
+        "grouped_vehicles",
+        "grouped_pedestrian_and_animals"
+    ]
+}

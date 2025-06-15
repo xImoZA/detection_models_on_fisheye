@@ -17,6 +17,7 @@ gdown = "^5.2.0"
 mypy = "^1.15.0"
 ruff = "^0.11.8"
 pre-commit = "^4.2.0"
+types-pyyaml = "^6.0.12.20250402"
 
 [tool.ruff]
 line-length = 120
@@ -29,6 +30,10 @@ ignore = ["E501"]
 quote-style = "double"
 
 [tool.mypy]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sklearn.*"
 ignore_missing_imports = true
 
 [build-system]
