@@ -23,6 +23,7 @@ repos:
           - numpy==2.2.5
           - scikit-learn==1.6.1
           - types-pyyaml==6.0.12.20250402
+          - ultralytics==8.3.128
         args:
           - --ignore-missing-imports
           - --show-error-codes
